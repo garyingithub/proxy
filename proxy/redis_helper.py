@@ -1,6 +1,6 @@
 import redis
 
-host='localhost'
+host='192.168.239.128'
 port=6379
 caseEnginePrefix="caseEngine:"
 

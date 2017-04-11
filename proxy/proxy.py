@@ -1,6 +1,7 @@
 from redis_helper import getEngineIdByCaseId
 from engine_cluster import getEngineAddress
 import logging
+import session_helper
 
 import tornado.httpserver
 import tornado.ioloop
@@ -42,25 +43,29 @@ class ProxyHandler(tornado.web.RequestHandler):
     def post(self):
         protocol = options.api_protocol
 
-
-        workitemId=self.get_argument('workitemId',default=None)
-        if workitemId:
+        workitemId=self.get_argument('workItemID',default="")
+        post_data = self.request.body
+        if not workitemId=="":
             caseId= self.parseCaseId(workitemId)
             engineId=getEngineIdByCaseId(caseId)
 
-            url="http://"+getEngineAddress(engineId)
+            url=getEngineAddress(engineId)
+
         else:
             url=options.admin_address
 
         # update host to destination host
         headers = dict(self.request.headers)
-        #headers["Host"] = host
+        headers["Host"] = url
+        url="http://"+url+self.request.uri
+
+
 
         try:
             AsyncHTTPClient().fetch(
                 HTTPRequest(url=url,
                             method="POST",
-                            body=self.request.body,
+                            body=post_data,
                             headers=headers,
                             follow_redirects=False),
                 self._on_proxy)

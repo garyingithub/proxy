@@ -1,10 +1,41 @@
 import threading
 
 from kazoo.client import KazooClient
+import tornado.httpclient as httpclient
+import urllib
+
 import logging
+class Engine(object):
+
+    def __init__(self,engineId,engineAddress):
+        self.engineId=engineId
+        self.engineAddress=engineAddress
+        #self.sessionHandle=self.loadSessionHandle()
+
+    post_data=urllib.urlencode({
+                'action':'connect',
+                'userID':'admin',
+                'password':'Se4tMaQCi9gr0Q2usp7P56Sk5vM='
+               })
+
+    #def getSessionHandle(self):
+    #    return self.sessionHandle
+
+    #def loadSessionHandle(self):
+    ##    request=httpclient.HTTPRequest(url="http://"+self.engineAddress+"/yawl/ib",
+      #                                 method="POST",
+      #                                 body=self.post_data,
+        #                               )
+       # client=httpclient.HTTPClient()
+
+        #response=client.fetch(request)
+        #return response.body
+
+
+
 
 path="/engine"
-zk_address='127.0.0.1:2181'
+zk_address='192.168.239.128:2181'
 zk = KazooClient(zk_address)
 
 
@@ -19,18 +50,15 @@ def watch_children(engines):
         if zk.exists(prefix+engine):
             data,stat=zk.get(prefix+engine)
             newMap[engine]=Engine(engine,data)
+    global engineMap
     engineMap=newMap
     print engineMap
 
 
 zk.start()
-
-
-class Engine(object):
-
-    def __init__(self,engineId,engineAddress):
-        self.engineId=engineId
-        self.engineAddress=engineAddress
+if not zk.exists(path):
+    zk.create(path,'0',makepath=True)
+#watch_children(zk.get_children(path))
 
 
 def getEngineAddress(engineId):
@@ -40,6 +68,12 @@ def getEngineAddress(engineId):
     if engine:
         return engine.engineAddress
     return engine
+
+def getEngineSessionHandle(engineId):
+
+    engine=engineMap[engineId]
+
+    return engine.getSessionHandle()
 
 
 
